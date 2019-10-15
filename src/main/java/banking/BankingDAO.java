@@ -34,7 +34,23 @@ public class BankingDAO {
 		}
 		return result;
 	}
-	
+        
+        public boolean customerExists(int id) throws SQLException {
+            String sql = "SELECT Total FROM Account WHERE CustomerId = ?";
+            
+            try ( 	Connection myConnection = myDataSource.getConnection(); 
+			PreparedStatement statement = myConnection.prepareStatement(sql)) {
+			statement.setInt(1, id); // On fixe le 1° paramètre de la requête
+			try (ResultSet resultSet = statement.executeQuery()) {
+				if (resultSet.next()) { // est-ce qu'il y a un résultat ? (pas besoin de "while", il y a au plus un enregistrement)
+					// On récupère les champs de l'enregistrement courant
+					return true;
+				}
+			}
+		}
+		return false;
+        }
+        
 	/**
 	 * Transfère amount € du compte du client fromID vers le compte du client toID
 	 * @param fromID l'ID du client à débiter
@@ -45,6 +61,12 @@ public class BankingDAO {
 	public void bankTransferTransaction(int fromID, int toID, float amount) throws Exception {
 		if (amount < 0)
 			throw new IllegalArgumentException("Le montant ne doit pas être négatif");
+                
+                if (! customerExists(fromID) || ! customerExists(toID))
+                        throw new IllegalArgumentException("Problem has occured with customers");
+                    
+                if (balanceForCustomer(fromID) < amount)
+                        throw new SoldeInsuffisant();
 	
 		String sql = "UPDATE Account SET Total = Total + ? WHERE CustomerID = ?";
 		try (	Connection myConnection = myDataSource.getConnection();

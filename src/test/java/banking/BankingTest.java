@@ -48,7 +48,7 @@ public class BankingTest {
 		// Le dernier paramètre correspond à la marge d'erreur tolérable
 		assertEquals("Balance incorrecte !", 100.0f, balance, 0.001f);
 	}
-
+        
 	@Test
 	public void successfulTransfer() throws Exception {
 		float amount = 10.0f;
@@ -62,9 +62,32 @@ public class BankingTest {
 		// Les balances doivent avoir été mises à jour dans les 2 comptes
 		assertEquals("Balance incorrecte !", before0 - amount, myDAO.balanceForCustomer(fromCustomer), 0.001f);
 		assertEquals("Balance incorrecte !", before1 + amount, myDAO.balanceForCustomer(toCustomer), 0.001f);				
-	}
-	
+        }
+        
+        @Test (expected = SoldeInsuffisant.class)
+        public void balanceTooLow() throws Exception {
+            float amount = 110.f;
+            int fromCustomer = 0;
+            int toCustomer = 1;
+            
+            float before0 = myDAO.balanceForCustomer(fromCustomer);
+            float before1 = myDAO.balanceForCustomer(toCustomer);
+            
+            myDAO.bankTransferTransaction(fromCustomer, toCustomer, amount);
+        }
 
+        @Test (expected = IllegalArgumentException.class) 
+        public void notRegisteredCustomers() throws Exception {
+            float amount = 110.f;
+            int fromCustomer = 0;
+            int toCustomer = 2;
+            
+            float before0 = myDAO.balanceForCustomer(fromCustomer);
+            float before1 = myDAO.balanceForCustomer(toCustomer);
+            
+            myDAO.bankTransferTransaction(fromCustomer, toCustomer, amount);
+        }
+        
 	public static DataSource getDataSource() throws SQLException {
 		org.hsqldb.jdbc.JDBCDataSource ds = new org.hsqldb.jdbc.JDBCDataSource();
 		ds.setDatabase("jdbc:hsqldb:mem:testcase;shutdown=true");
